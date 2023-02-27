@@ -7,10 +7,12 @@ public class SimulatorController : MonoBehaviour
 {
     [SerializeField] private RenderTexture main_texture;
     [SerializeField] private Material material;
+    [SerializeField] private Texture2D setup_texture;
     [SerializeField] private Texture2D initial_texture;
     [SerializeField] private ScreenController screen_controller;
     [SerializeField] private float spring_force = 0.1f;
     [SerializeField] private float damping_factor = 0.1f;
+    [SerializeField] private float frequency = 0.1f;
 
     // Start is called before the first frame update
     void Start()
@@ -30,6 +32,7 @@ public class SimulatorController : MonoBehaviour
         {
             Debug.LogError("No material");
         }
+        material.SetTexture("_SetupTex", setup_texture);
     }
 
     // Update is called once per frame
@@ -47,6 +50,8 @@ public class SimulatorController : MonoBehaviour
         material.SetVector("_MousePos", mouse_vector);
         material.SetFloat("_SpringForce", spring_force);
         material.SetFloat("_DampingFactor", damping_factor);
+        material.SetFloat("_Frequency", frequency);
+        material.SetFloat("_FrameIdx", Time.frameCount);
 
         Graphics.Blit(main_texture, temp, material);
         Graphics.Blit(temp, main_texture);
@@ -87,10 +92,10 @@ public class SimulatorController : MonoBehaviour
         Vector2 mouse_pos = Input.mousePosition;
         Vector2 main_texture_size = new Vector2(main_texture.width, main_texture.height);
         Vector2 screen_offset = screen_controller.position - Vector2.one / 2f;
-        Debug.Log(mouse_pos);
+        // Debug.Log(mouse_pos);
 
         float scale = main_texture.width / (float)Screen.width / screen_controller.zoom;
-        Debug.Log("Scale: " + scale);
+        // Debug.Log("Scale: " + scale);
         mouse_pos.x -= (Screen.width - main_texture.width / scale) / 2f;
         mouse_pos.y -= (Screen.height - main_texture.height / scale) / 2f;
         mouse_pos = mouse_pos * scale - screen_offset * main_texture_size;

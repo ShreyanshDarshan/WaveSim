@@ -3,9 +3,11 @@
     Properties
     {
         _MainTex ("MainTexture", 2D) = "white" {}
-        // _SetupTex ("SetupTexture", 2D) = "white" {}
+        _SetupTex ("SetupTexture", 2D) = "white" {}
         _SpringForce ("SpringForce", Float) = 0.1
         _DampingFactor ("DampingFactor", Float) = 0.1
+        _Frequency ("Frequency", Float) = 0.1
+        _FrameIdx ("FrameIdx", Float) = 0
         [MaterialToggle] _IsPaused ("IsPaused", Float) = 1
         _MousePos ("MousePos", Vector) = (0, 0, 0, 0)
     }
@@ -43,8 +45,10 @@
             }
 
             sampler2D _MainTex;
+            sampler2D _SetupTex;
             float4 _MainTex_TexelSize;
-            float _Speed;
+            float _Frequency;
+            float _FrameIdx;
             float _IsPaused;
             float4 _MousePos;
             float _SpringForce;
@@ -61,8 +65,9 @@
                         // Simulate self restoration
                         float2 neighbor = uv_pos + float2(i, j) * _MainTex_TexelSize.xy;
                         float4 col = tex2D(_MainTex, neighbor);
+                        
                         float neighbor_position = col.r;
-                        float neighbor_restoration_force = -(position - neighbor_position) * _SpringForce;
+                        float neighbor_restoration_force = -(position - neighbor_position) * _SpringForce;// * (1-cell_nature.r * cell_nature.g * cell_nature.b * cell_nature.a / );
                         force += neighbor_restoration_force * (1 - abs(i*j));
                         force += neighbor_restoration_force * abs(i*j) * 0.293;
                     }
@@ -78,14 +83,37 @@
                     i.uv.y > 1 - _MainTex_TexelSize.y) {
                     return float4(0.0, 0.0, 0.0, 1);
                 }
+
+                // if (all(tex2D(_SetupTex, i.uv).rgba == float4(1, 0, 1, 1))) {
+                //     float3 col = tex2D(_MainTex, i.uv + float2(_MainTex_TexelSize.x, 0)).rgb / 1.0;
+                //     return float4(col, 1);
+                // }
+
+                // if (all(tex2D(_SetupTex, i.uv).rgba == float4(1, 1, 0, 1))) {
+                //     float3 col = tex2D(_MainTex, i.uv + float2(0, _MainTex_TexelSize.y)).rgb;
+                //     return float4(col, 1);
+                // }
+
+                // Reflections
+                if (all(tex2D(_SetupTex, i.uv).rgba == float4(0, 0, 1, 1))) {
+                    return float4(0, 0, 0, 1);
+                }
+
+                // Sources
+                if (all(tex2D(_SetupTex, i.uv).rgba == float4(0, 1, 0, 1))) {
+                    float pos = sin(_FrameIdx * _Frequency);
+                    return float4(pos, 0, -pos, 1);
+                }
+
                 // Simulate springs
                 float4 color = tex2D(_MainTex, i.uv);
                 float position = color.r;
                 float velocity = color.g;
                 if (_IsPaused == 0) {
                     float restoration_force = get_restoration_force(i.uv, position);
-                    velocity += restoration_force;
-                    float damping_force = -velocity * _DampingFactor;
+                    float4 cell_nature = tex2D(_SetupTex, i.uv);
+                    velocity += restoration_force / (1 + 2 * cell_nature.r * (1-cell_nature.g) * (1-cell_nature.b) * (cell_nature.a));
+                    float damping_force = -velocity * (_DampingFactor + 0.05 * cell_nature.r * cell_nature.g * cell_nature.b * cell_nature.a);
                     velocity += damping_force;
                     position += velocity;
                 }
