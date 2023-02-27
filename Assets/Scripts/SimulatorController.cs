@@ -8,7 +8,7 @@ public class SimulatorController : MonoBehaviour
     [SerializeField] private RenderTexture main_texture;
     [SerializeField] private Material material;
     [SerializeField] private Texture2D setup_texture;
-    [SerializeField] private Texture2D initial_texture;
+    // [SerializeField] private Texture2D initial_texture;
     [SerializeField] private ScreenController screen_controller;
     [SerializeField] private float spring_force = 0.1f;
     [SerializeField] private float damping_factor = 0.1f;
@@ -19,11 +19,11 @@ public class SimulatorController : MonoBehaviour
     {
         screen_controller = GetComponent<ScreenController>();
 
-        InitializeTexture(ref main_texture, initial_texture);
-        if (initial_texture == null)
-        {
-            Debug.LogError("No initial texture");
-        }
+        InitializeTexture(ref main_texture, setup_texture);
+        // if (initial_texture == null)
+        // {
+        //     Debug.LogError("No initial texture");
+        // }
         if (main_texture == null)
         {
             Debug.LogError("Failed to initialize texture");
@@ -71,7 +71,7 @@ public class SimulatorController : MonoBehaviour
             width = init_tex.width;
             height = init_tex.height;
             tex = new RenderTexture(width, height, depth, RenderTextureFormat.ARGBFloat, RenderTextureReadWrite.Default);
-            Graphics.Blit(init_tex, tex);
+            // Graphics.Blit(init_tex, tex);
         }
         else
         {
